@@ -17,7 +17,6 @@ create table employee{
     salary float,
     role role_type,
     laboratory_name varchar(30),
-    project_cup char(15),
     constraint employee_pk primary key(ssn)
 };
 
@@ -36,8 +35,7 @@ create table laboratory{
     topic varchar(50),
     sresp ssn_type,
     constraint lab_pk primary key(name),
-    constraint lsresp_fk foreign key(sresp) references employee(ssn)
-    on update cascade on delete cascade
+    constraint lsresp_fk foreign key(sresp) references employee(ssn) on update cascade on delete cascade
 };
 
 create table project{
@@ -50,8 +48,8 @@ create table project{
     sresp ssn_type,
     sref ssn_type,
     constraint project_pk primary key(cup),
-    constraint psresp_fk foreign key(sresp) references employee(ssn),
-    constraint psref_fk foreign key(sref) references employee(ssn)
+    constraint psresp_fk foreign key(sresp) references employee(ssn) on update cascade on delete cascade,
+    constraint psref_fk foreign key(sref) references employee(ssn) on update cascade on delete cascade
 };
 
 create table equipment{
@@ -64,12 +62,18 @@ create table equipment{
     laboratory_name varchar(30),
     project_cup char(15),
     constraint equipment_pk primary key(id_equipment),
-    constraint lab_equipment_fk foreign key(laboratory_name) references laboratory(name) on update cascade on delete,
-    constraint project_equipment_fk foreign key(project_cup) references project(cup)
+    constraint lab_equipment_fk foreign key(laboratory_name) references laboratory(name) on update cascade on set null,
+    constraint project_equipment_fk foreign key(project_cup) references project(cup) on update cascade on delete set null
 };
+
+create table temporary_contract(
+    ssn ssn_type,
+    cup char(15),
+    constraint temp_ssn_fk foreign key(ssn) references employee(ssn) on update cascade on delete cascade,
+    constraint temp_cup_fk foreign key(cup) references project(project_cup) on update cascade on delete cascade
+);
 
 alter table employee 
 add constraint emp_lab_fk foreign key(laboratory_name) references laboratory(name);
 
-alter table employee
-add constraint emp_project_fk foreign key(project_cup) references project(cup);
+
