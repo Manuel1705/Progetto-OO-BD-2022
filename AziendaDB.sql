@@ -6,7 +6,7 @@ role_type like "senior" or
 role_type like "executive" or 
 role_type like "temporary";
 
-create table employee{
+create table employee(
     ssn ssn_type,
     first_name varchar(30),
     last_name varchar(30),
@@ -18,9 +18,9 @@ create table employee{
     role role_type,
     laboratory_name varchar(30),
     constraint employee_pk primary key(ssn)
-};
+);
 
-create table career_development{
+create table career_development(
 old_role role_type,
 new_role role_type,
 role_change_date date,
@@ -28,17 +28,17 @@ salary_change float,
 ssn ssn_type,
 constraint cd_emp_fk foreign key(ssn) references employee(ssn)
 on update cascade on delete cascade 
-};
+);
 
-create table laboratory{
+create table laboratory(
     name varchar(30),
     topic varchar(50),
     sresp ssn_type,
     constraint lab_pk primary key(name),
     constraint lsresp_fk foreign key(sresp) references employee(ssn) on update cascade on delete cascade
-};
+);
 
-create table project{
+create table project(
     cup char(15),
     name varchar(30),
     budget float,
@@ -50,9 +50,9 @@ create table project{
     constraint project_pk primary key(cup),
     constraint psresp_fk foreign key(sresp) references employee(ssn) on update cascade on delete cascade,
     constraint psref_fk foreign key(sref) references employee(ssn) on update cascade on delete cascade
-};
+);
 
-create table equipment{
+create table equipment(
     id_equipment serial,
     name varchar(30),
     description varchar(200),
@@ -64,7 +64,7 @@ create table equipment{
     constraint equipment_pk primary key(id_equipment),
     constraint lab_equipment_fk foreign key(laboratory_name) references laboratory(name) on update cascade on set null,
     constraint project_equipment_fk foreign key(project_cup) references project(cup) on update cascade on delete set null
-};
+);
 
 create table temporary_contract(
     ssn ssn_type,
