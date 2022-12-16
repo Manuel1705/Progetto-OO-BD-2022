@@ -5,7 +5,7 @@ value like 'middle' or
 value like 'senior' or 
 value like 'executive' or 
 value like 'temporary');
-create domain azienda.ssn_type as varchar(15) constraint ssn_domain check(value similar to '^\d+$');
+create domain azienda.ssn_type as char(15) constraint ssn_domain check(value similar to '^[0-9]+$');
 create table azienda.employee(
     ssn azienda.ssn_type,
     first_name varchar(30),
@@ -76,4 +76,4 @@ create table azienda.temporary_contract(
 alter table azienda.employee 
 add constraint emp_lab_fk foreign key(laboratory_name) references azienda.laboratory(name);
 
-
+insert into azienda.employee values('123456789123451','io','sempre io','3465013137','manuelrignogna@alice.it','casa mia','2012-12-12',1,'junior',null);
