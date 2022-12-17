@@ -1,11 +1,15 @@
-
 create schema azienda;
-create domain azienda.role_type as varchar(9) constraint role_domain check (value like 'junior' or 
+
+create domain azienda.role_type as varchar(9) constraint role_domain check (
+   value like 'junior' or 
 value like 'middle' or 
 value like 'senior' or 
 value like 'executive' or 
-value like 'temporary');
-create domain azienda.ssn_type as char(15) constraint ssn_domain check(value similar to '^[0-9]+$');
+value like 'temporary'
+);
+
+create domain azienda.ssn_type as char(15) constraint ssn_domain check(value similar to '\d+');
+
 create table azienda.employee(
     ssn azienda.ssn_type,
     first_name varchar(30),
