@@ -34,13 +34,7 @@ constraint cd_emp_fk foreign key(ssn) references azienda.employee(ssn)
 on update cascade on delete cascade 
 );
 
-create table azienda.laboratory(
-    name varchar(30),
-    topic varchar(50),
-    sresp azienda.ssn_type,
-    constraint lab_pk primary key(name),
-    constraint lsresp_fk foreign key(sresp) references azienda.employee(ssn) on update cascade on delete cascade
-);
+
 
 create table azienda.project(
     cup char(15),
@@ -54,6 +48,16 @@ create table azienda.project(
     constraint project_pk primary key(cup),
     constraint psresp_fk foreign key(sresp) references azienda.employee(ssn) on update cascade on delete cascade,
     constraint psref_fk foreign key(sref) references azienda.employee(ssn) on update cascade on delete cascade
+);
+
+create table azienda.laboratory(
+    name varchar(30),
+    topic varchar(50),
+    sresp azienda.ssn_type,
+    project char(15),
+    constraint lab_pk primary key(name),
+    constraint lab_prjct foreign key(project) references azienda.project(cup) on update cascade on delete set null
+    constraint lsresp_fk foreign key(sresp) references azienda.employee(ssn) on update cascade on delete cascade
 );
 
 create table azienda.equipment(
