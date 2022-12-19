@@ -221,7 +221,7 @@ from azienda.temporary_contract
 where ssn=new.ssn;
 
 select sum(emp.salary) into sum_salary
-from azienda.employee emp join azienda.temporary_contract temp on emp.ssn=tmp
+from azienda.employee emp join azienda.temporary_contract temp on emp.ssn=temp.ssn
 where temp.cup=cup_new_emp and emp.role like 'temporary';
 
 select budget, end_date into project_budget, end_date_prj
