@@ -359,12 +359,12 @@ for each row
 execute function check_scientific_responsable_prj();
 ------------------------------------------
 
-create function check_max_lab_insert() returns trigger as &check_max_lab_insert_trigger&
+create function check_max_lab_insert() returns trigger as $check_max_lab_insert_trigger$
 declare 
    count_project integer;
 begin
 select count(project) into count_project from azienda.laboratory where project=new.project;
-if count_project>3
+if count_project>3 then
    delete from azienda.laboratory where name=new.name; 
 end if;
 end;
@@ -372,14 +372,14 @@ $check_max_lab_insert_trigger$ LANGUAGE plpgsql;
 
 create trigger check_max_lab_insert_trigger after insert or update of project on azienda.laboratory
 for each row
-execute function check_max_lab_insert(); 
+execute function check_max_lab_insert();
 -------------------------------------------
-create function check_max_lab_update() returns trigger as &check_max_lab_update_trigger&
+create function check_max_lab_update() returns trigger as $check_max_lab_update_trigger$
 declare 
    count_project integer;
 begin
 select count(project) into count_project from azienda.laboratory where project=new.project;
-if count_project>3
+if count_project>3 then
    update azienda.laboratory set project=old.project where name=new.name; 
 end if;
 end;
@@ -387,14 +387,14 @@ $check_max_lab_update_trigger$ LANGUAGE plpgsql;
 
 create trigger check_max_lab_update_trigger after insert or update of project on azienda.laboratory
 for each row
-execute function check_max_lab_update(); 
+execute function check_max_lab_update();  
 ------------------------------
 create function check_expired_project() returns trigger as $check_expired_project_trigger$
 declare
-   end_date_prj project.end_date%type;
+   end_date_prj azienda.project.end_date%type;
 begin
 select end_date into end_date_prj from azienda.project where cup=new.cup;
-if end_date_prj<current_date
+if end_date_prj<current_date then
   delete from azienda.temporary_contract where ssn=new.ssn;
   delete from azienda.employee where ssn=new.ssn; 
 end if;
@@ -411,21 +411,24 @@ declare
   emp_exists integer;
 begin
 select count(ssn) into emp_exists from azienda.project where sresp=new.ssn;
-if emp_exists > 1
-    if new.role <>"executive"
+if emp_exists > 1 then
+    if new.role <>'executive' then
     update azienda.project set sresp=old.sresp where sresp=new.ssn;
+	end if;
 end if;
 
 select count(ssn) into emp_exists from azienda.project where sref=new.ssn;
-if emp_exists > 1
-    if new.role <>"senior"
+if emp_exists > 1 then
+    if new.role <>'senior' then
     update azienda.project set sref=old.sref where sref=new.ssn;
+	end if;
 end if;
 
 select count(ssn) into emp_exists from azienda.laboratory where sref=new.ssn;
-if emp_exists > 1
-    if new.role <>"senior"
+if emp_exists > 1 then
+    if new.role <>'senior' then
     update azienda.laboratory set sref=old.sref where sref=new.ssn;
+	end if;
 end if;
 end;
 $check_resp_trigger$ LANGUAGE plpgsql;
@@ -440,7 +443,7 @@ create or replace procedure update_role_check_date() as
 $$
 declare
    expired_project cursor for select cup from azienda.project where end_date<current_date;
-   ssn_expired employee.snn%type;
+   ssn_expired azienda.employee.ssn%type;
 begin
 for cup_expired in expired_project loop
 select ssn into ssn_expired from azienda.temporary_contract where cup=cup_expired;
@@ -454,19 +457,21 @@ $$ LANGUAGE plpgsql;
 
 create procedure check_employment_date_procedure()as $$
 begin
-if new.role = 'junior' or new.role = 'middle' or new.role = 'senior'
+if new.role = 'junior' or new.role = 'middle' or new.role = 'senior' then
     if current_date-new.employment_date<3*365 and new.role<>'junior' then
-        update on azienda.employee
+        update azienda.employee
         set role='junior'
-        where ssn=new.ssn
+        where ssn=new.ssn;
      elsif current_date-new.employment_date>=3*365 and current_date-new.employment_date<7*365 and new.role<>"middle" then
-        update on azienda.employee
+        update azienda.employee
         set role='middle'
-        where ssn=new.ssn
+        where ssn=new.ssn;
     elsif current_date-new.employment_date>=7*365 and new.role<>"senior" then
-        update on azienda.employee
+        update azienda.employee
         set role='senior'
-        where ssn=new.ssn
+        where ssn=new.ssn;
+	end if;
 end if;
 end;
 $$ LANGUAGE plpgsql;
+
