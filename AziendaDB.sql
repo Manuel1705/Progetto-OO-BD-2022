@@ -38,7 +38,9 @@ create table azienda.laboratory(
     name varchar(30),
     topic varchar(50),
     sresp azienda.ssn_type,
+    project char(15),
     constraint lab_pk primary key(name),
+    constraint lab_prjct foreign key(project) references azienda.project(cup) on update cascade on delete set null,
     constraint lsresp_fk foreign key(sresp) references azienda.employee(ssn) on update cascade on delete cascade
 );
 
