@@ -111,12 +111,13 @@ execute function check_employment_date();
 
 create function add_career_development() returns trigger as $add_career_development_trigger$
 begin
-if new.rolw<>old.role
-insert into azienda.career_development values(old.role, new.role, current_date, new.salary-old.salary, new.ssn);
+if new.role<>old.role then
+	insert into azienda.career_development values(old.role, new.role, current_date, new.salary-old.salary, new.ssn);
 end if;
-&add_career_development_trigger$ LANGUAGE plpgsql;
+end;
+$add_career_development_trigger$ LANGUAGE plpgsql;
 
-create trigger add_career_development_trigger after update of role on employee
+create trigger add_career_development_trigger after update of role on azienda.employee
 for each row
 execute function add_career_development();
 ---------------------------------
@@ -124,9 +125,9 @@ execute function add_career_development();
 
 create function check_remaining_funds() returns trigger as $check_remaining_funds_trigger$
 begin
-update on azienda.project
+update azienda.project
 set remaining_funds=new.budget
-where cup=new.cup
+where cup=new.cup;
 end;
 $check_remaining_funds_trigger$ LANGUAGE plpgsql;
 
@@ -137,38 +138,37 @@ execute function check_remaining_funds();
 
 create function update_remaining_funds_employee_insert() returns trigger as $update_remaining_funds_employee_insert_trigger$
 declare
-role_emp employee.role%type;
-emp_salary employee.salary%type;
-end_date_prj project.end_date%type;
+role_emp azienda.employee.role%type;
+emp_salary azienda.employee.salary%type;
+end_date_prj azienda.project.end_date%type;
 begin
 select role, salary into role_emp, emp_salary from azienda.employee where ssn=new.ssn;
-if role_emp="temporary"
-select end_date into end_date_prj from azienda.project where cup=new.cup;
-;
-update azienda.project
-set remaining_funds=remaining_funds-(emp_salary*(end_date-current_date/30));
+if role_emp='temporary' then
+	select end_date into end_date_prj from azienda.project where cup=new.cup;
+	update azienda.project
+	set remaining_funds=remaining_funds-(emp_salary*(end_date-current_date/30));
 end if;
 end;
 $update_remaining_funds_employee_insert_trigger$ LANGUAGE plpgsql;
 
 create trigger update_remaining_funds_employee_insert_trigger after insert on azienda.temporary_contract
 for each row
-execute function update_remaining_funds_insert_employee();
+execute function update_remaining_funds_employee_insert();
 ---------------------------------
 create function update_remaining_funds_equipment_delete() returns trigger as $update_remaining_funds_equipment_delete_trigger$
 declare
-role_emp employee.role%type;
-emp_salary employee.salary%type;
-end_date_prj project.end_date%type;
+role_emp azienda.employee.role%type;
+emp_salary azienda.employee.salary%type;
+end_date_prj azienda.project.end_date%type;
 begin
 select role, salary into role_emp, emp_salary from azienda.employee where ssn=new.ssn;
-if role_emp="temporary"
+if role_emp='temporary' then
 select end_date into end_date_prj from azienda.project where cup=new.cup;
 update azienda.project
 set remaining_funds=remaining_funds+(emp_salary*(end_date-current_date/30));
 end if;
 end;
-&update_remaining_funds_equipment_delete_trigger& LANGUAGE plpgsql;
+$update_remaining_funds_equipment_delete_trigger$ LANGUAGE plpgsql;
 
 create trigger update_remaining_funds_equipment_delete_trigger before delete on azienda.equipment
 for each row
@@ -189,9 +189,10 @@ execute function update_remaining_funds_equipment();
 
 create function check_end_date() returns trigger as $check_end_date_trigger$
 begin
-if new.start_date>=new.end_date
-delete from azienda.PROJECT
-WHERE cup=new.cup;
+if new.start_date>=new.end_date then
+	delete from azienda.PROJECT
+	WHERE cup=new.cup;
+end if;
 end;
 $check_end_date_trigger$ LANGUAGE plpgsql;
 
@@ -201,11 +202,11 @@ execute function check_end_date();
 ---------------------------------
 create function check_salary_temporary() returns trigger as $check_salary_temporary_trigger$
 declare 
-sum_salary employee.salary%type;
-cup_new_emp project.cup%type;
-project_budget project.budget%type;
+sum_salary azienda.employee.salary%type;
+cup_new_emp azienda.project.cup%type;
+project_budget azienda.project.budget%type;
 remaining_months integer;
-end_date_prj project.end_date%type;
+end_date_prj azienda.project.end_date%type;
 begin
 
 select cup into cup_new_emp
@@ -222,9 +223,9 @@ where cup=cup_new_emp;
 
 remaining_months:= end_date_prj-current_date;
 
-if sum_salary*remaining_months>project_budget/2
-delete from employee
-where ssn=new.ssn;
+if sum_salary*remaining_months>project_budget/2 then
+	delete from employee
+	where ssn=new.ssn;
 end if;
 end;
 $check_salary_temporary_trigger$ LANGUAGE plpgsql;
@@ -237,8 +238,8 @@ execute function check_salary_temporary();
 
 create function check_price_equipment() returns trigger as $check_price_equipment_trigger$
 declare 
-sum_price equipment.price%type;
-project_budget project.budget%type;
+sum_price azienda.equipment.price%type;
+project_budget azienda.project.budget%type;
 begin
 select budget into project_budget
 from azienda.project 
@@ -248,30 +249,30 @@ select sum(price) into sum_price
 from azienda.equipment
 where project_cup=new.cup;
 
-if sum_price>project_budget/2
-delete from azienda.equipment
-where id_equipment=new.id_equipment;
+if sum_price>project_budget/2 then
+	delete from azienda.equipment
+	where id_equipment=new.id_equipment;
 end if;
 end;
 $check_price_equipment_trigger$ LANGUAGE plpgsql;
 
 create trigger check_price_equipment_trigger after insert on azienda.equipment
-fro each row
+for each row
 execute function check_price_equipment();
 ---------------------------------
 create function check_budget() returns trigger as $check_budget_trigger$
 declare
-sum_salary employee.salary%type;
-sum_price equipment.price%type;
+sum_salary azienda.employee.salary%type;
+sum_price azienda.equipment.price%type;
 remaining_months int;
 begin
 select sum(price) into sum_price
 from azienda.equipment
 where project_cup=new.cup;
-if new.budget/2<sum_price
-update azienda.project
-set budget=old.budget
-where cup=new.cup;
+if new.budget/2<sum_price then
+	update azienda.project
+	set budget=old.budget
+	where cup=new.cup;
 end if;
 
 select sum(emp.salary) into sum_salary
@@ -279,10 +280,10 @@ from azienda.employee emp join azienda.temporary_contract temp on emp.ssn=tmp
 where temp.cup=cup_new_emp and emp.role like 'temporary';
 
 remaining_months=new.end_date-current_date;
-if sum_salary*remaining_months>new.budget/2
-update azienda.project
-set budget=old.budget
-where cup=new.cup;
+if sum_salary*remaining_months>new.budget/2 then
+	update azienda.project
+	set budget=old.budget
+	where cup=new.cup;
 end if;
 end;
 $check_budget_trigger$ LANGUAGE plpgsql; 
@@ -293,51 +294,52 @@ execute function check_budget();
 ---------------------------------
 create function check_scientific_reference() returns trigger as $check_scientific_reference_trigger$
 declare
-role_emp employee.role%type;
+role_emp azienda.employee.role%type;
 begin
 select role into role_emp from azienda.employee where ssn=new.sref;
-if role_emp<>"senior"
-update project
-set sref=old.sref;
+if role_emp<>'senior' then
+	update project
+	set sref=old.sref;
 end if;
 end;
-&check_scientific_reference_trigger$ LANGUAGE plpgsql;
+$check_scientific_reference_trigger$ LANGUAGE plpgsql;
 
-create trigger check_scientific_reference_trigger after insert or update of sref on project
+create trigger check_scientific_reference_trigger after insert or update of sref on azienda.project
 for each row
 execute function check_scientific_reference();
+
 ---------------------------------
 
-create function check_scientific_responsable_lab() returns trigger as &check_scientific_respnsable_lab_trigger$
+create function check_scientific_responsable_lab() returns trigger as $check_scientific_respnsable_lab_trigger$
 declare
-role_emp employee.role%type;
+role_emp azienda.employee.role%type;
 begin
 select role into role_emp from azienda.employee where ssn=new.sresp;
-if role_emp<>"senior"
-update laboratory
-set sresp=old.sresp;
+if role_emp<>'senior' then
+	update laboratory
+	set sresp=old.sresp;
 end if;
 end;
-&check_scientific_respnsable_lab_trigger$ LANGUAGE plpgsql;
+$check_scientific_respnsable_lab_trigger$ LANGUAGE plpgsql;
 
-create trigger check_scientific_respnsable_lab_trigger after insert or update of sresp on laboratory
+create trigger check_scientific_respnsable_lab_trigger after insert or update of sresp on azienda.laboratory
 for each row
 execute function check_scientific_responsable_lab();
 -----------------------------------------
 
-create function check_scientific_responsable_prj() returns trigger as &check_scientific_responsable_prj_trigger&
+create function check_scientific_responsable_prj() returns trigger as $check_scientific_responsable_prj_trigger$
 declare
-role_emp employee.role%type;
+role_emp azienda.employee.role%type;
 begin
 select role into role_emp from azienda.employee where ssn=new.sref;
-if role_emp<>"executive"
-update project
-set sref=old.sref;
+if role_emp<>'executive' then
+	update project
+	set sref=old.sref;
 end if;
 end;
-&check_scientific_responsable_prj_trigger& LANGUAGE plpgsql;
+$check_scientific_responsable_prj_trigger$ LANGUAGE plpgsql;
 
-create trigger check_scientific_responsable_prj_trigger after insert or update of sref on project
+create trigger check_scientific_responsable_prj_trigger after insert or update of sref on azienda.project
 for each row
 execute function check_scientific_responsable_prj();
 ------------------------------------------
