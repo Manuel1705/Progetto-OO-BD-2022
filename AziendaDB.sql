@@ -84,7 +84,7 @@ insert into azienda.employee values('123456789123451','io','sempre io','34650131
 
 
 -----------------------------------------------------------------------------------------------
-create fuction check_employment_date() returns trigger as $check_employment_date_trigger$
+create function check_employment_date() returns trigger as $check_employment_date_trigger$
 begin
 if new.role = 'junior' or new.role = 'middle' or new.role = 'senior'
     if current_date-new.employment_date<3*365 and new.role<>'junior' then
