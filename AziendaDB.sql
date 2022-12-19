@@ -86,24 +86,25 @@ insert into azienda.employee values('123456789123451','io','sempre io','34650131
 -----------------------------------------------------------------------------------------------
 create function check_employment_date() returns trigger as $check_employment_date_trigger$
 begin
-if new.role = 'junior' or new.role = 'middle' or new.role = 'senior'
-    if current_date-new.employment_date<3*365 and new.role<>'junior' then
-        update on azienda.employee
+if new.role = 'junior' or new.role = 'middle' or new.role = 'senior' then
+    if current_date - new.employment_date<3*365 and new.role<>'junior' then
+        update azienda.employee
         set role='junior'
-        where ssn=new.ssn
+        where ssn=new.ssn;
      elsif current_date-new.employment_date>=3*365 and current_date-new.employment_date<7*365 and new.role<>"middle" then
-        update on azienda.employee
+        update azienda.employee
         set role='middle'
-        where ssn=new.ssn
+        where ssn=new.ssn;
     elsif current_date-new.employment_date>=7*365 and new.role<>"senior" then
-        update on azienda.employee
+        update azienda.employee
         set role='senior'
-        where ssn=new.ssn
+        where ssn=new.ssn;
+	end if;
 end if;
 end;
 $check_employment_date_trigger$ LANGUAGE plpgsql;
 
-create trigger check_employment_date_trigger after insert or update of ruolo on azienda.impiegato
+create trigger check_employment_date_trigger after insert or update of role on azienda.employee
 for each row
 execute function check_employment_date();
 ---------------------------------
